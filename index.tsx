@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenAI, Type } from "@google/genai";
 import { 
@@ -266,42 +266,8 @@ const App = () => {
   const [analysis, setAnalysis] = useState<SubscriptionAnalysis[]>(INITIAL_ANALYSIS);
   
   // Synchronous initialization for frame-zero rendering
-  const [heroImage, setHeroImage] = useState<string>(() => localStorage.getItem('smartpause_hero_cache') || DEFAULT_HERO_SVG);
-  const [logoImage, setLogoImage] = useState<string>(() => localStorage.getItem('smartpause_logo_cache') || DEFAULT_LOGO_SVG);
-
-  const fetchLogo = async () => {
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: IMAGE_MODEL,
-        contents: "A professional minimalist circular logo for a futuristic fintech AI named 'SmartPause'. Geometric 'S' combined with a pause icon. Glowing neon cyan and magenta accents, deep black background. Vector style, premium branding.",
-      });
-      for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-          const base64 = `data:image/png;base64,${part.inlineData.data}`;
-          setLogoImage(base64);
-          localStorage.setItem('smartpause_logo_cache', base64);
-        }
-      }
-    } catch (e) { console.error("Logo update failed", e); }
-  };
-
-  const fetchHeroImage = async () => {
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: IMAGE_MODEL,
-        contents: "Cinematic, macro photography of a crystal planet core, floating geometric obsidian shards, liquid neon magenta and cyan light streams, dark space background, futuristic minimalism, 8k render.",
-      });
-      for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-          const base64 = `data:image/png;base64,${part.inlineData.data}`;
-          setHeroImage(base64);
-          localStorage.setItem('smartpause_hero_cache', base64);
-        }
-      }
-    } catch (e) { console.error("Hero update failed", e); }
-  };
+  const heroImage = "/images/download.png";
+  const logoImage = "/images/frontpic.png";
 
   const runAnalysis = async () => {
     setLoading(true);
@@ -348,12 +314,6 @@ const App = () => {
       if (data.length > 0) setAnalysis(data);
     } catch (err: any) { console.error(err); } finally { setLoading(false); }
   };
-
-  useEffect(() => {
-    // Silent background updates if cache is stale or missing
-    if (logoImage === DEFAULT_LOGO_SVG) fetchLogo();
-    if (heroImage === DEFAULT_HERO_SVG) fetchHeroImage();
-  }, []);
 
   const totalPotentialSavings = useMemo(() => {
     return analysis.reduce((acc, item) => acc + (item.counterfactualSavings.ignoreAnnual - item.counterfactualSavings.followAnnual), 0);
