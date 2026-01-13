@@ -1,7 +1,6 @@
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import { GoogleGenAI, Type } from "@google/genai";
 import { 
   TrendingDown, 
   AlertTriangle, 
@@ -9,32 +8,30 @@ import {
   Clock, 
   ShieldCheck, 
   RefreshCcw, 
-  Wallet,
-  Calendar,
-  ChevronRight,
-  ChevronLeft,
-  Info,
-  PauseCircle,
-  XCircle,
-  Database,
-  Heart,
-  Sparkles,
-  ArrowRight,
-  LayoutDashboard,
-  Zap,
-  Layers,
-  Globe
+  Wallet, 
+  Calendar, 
+  ChevronRight, 
+  ChevronLeft, 
+  Info, 
+  PauseCircle, 
+  XCircle, 
+  Database, 
+  Heart, 
+  Sparkles, 
+  ArrowRight, 
+  LayoutDashboard, 
+  Zap, 
+  Layers, 
+  Globe 
 } from 'lucide-react';
 
-// --- Constants & Assets ---
+// --- Permanent Saved Assets ---
 
-const MODEL_NAME = 'gemini-3-flash-preview';
-const IMAGE_MODEL = 'gemini-2.5-flash-image';
+// A professional, permanent logo asset for SmartPause
+const LOGO_ASSET = "https://images.unsplash.com/photo-1614850523296-e8c1d4704a96?q=80&w=200&h=200&auto=format&fit=crop";
 
-// Instant-load High Fidelity Placeholders
-const DEFAULT_LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iNjQiIGZpbGw9ImJsYWNrIi8+CjxwYXRoIGQ9Ik0xNjAgMTYwSDE5MlYyNTZIMzIwVjE2MEgzNTJWMzUySDMyMFYyNTZIMTkyVjM1MkgxNjBWMTYwWiIgZmlsbD0idXJsKCNwYWludDBfbGluZWFyKSIvPgo8cmVjdCB4PSIyMTAiIHk9IjM4MCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjYwIiByeD0iNSIgZmlsbD0iIzIyRDMzRSIvPgo8cmVjdCB4PSIyOTIiIHk9IjM4MCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjYwIiByeD0iNSIgZmlsbD0iIzIyRDMzRSIvPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJwYWludDBfbGluZWFyIiB4MT0iMTYwIiB5MT0iMTYwIiB4Mj0iMzUyIiB5Mj0iMzUyIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiMyMkQzRUUiLz4KPHN0b3Atb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjRjQ3MkI2Ii8+CjwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPC9zdmc+`;
-
-const DEFAULT_HERO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiB2aWV3Qm94PSIwIDAgMTkyMCAxMDgwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiBmaWxsPSIjMEQwRDEyIi8+CjxjaXJjbGUgY3g9Ijk2MCIgY3k9Ijc0MCIgcj0iNjAwIiBmaWxsPSJ1cmwoI3BhaW50MF9yYWRpYWwpIiBmaWxsLW9wYWNpdHk9IjAuMSIvPgo8ZyBvcGFjaXR5PSIwLjMiPgo8cGF0aCBkPSJNMCAxMDgwTDE5MjAgMTA4MEwxOTIwIDBMMCAxMDgwWiIgZmlsbD0idXJsKCNwYWludDFfbGluZWFyKSIvPgo8L2c+CjxkZWZzPgo8cmFkaWFsR3JhZGllbnQgaWQ9InBhaW50MF9yYWRpYWwiIGN4PSIwIiBjeT0iMCIgcj0iMSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIGdyYWRpZW50VHJhbnNmb3JtPSJ0cmFuc2xhdGUoOTYwIDc0MCkgcm90YmFzZSgzMDYwKSI+CjxzdG9wIHN0b3AtY29sb3I9IiMyMkQzRUUiLz4KPHN0b3Atb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSJ0cmFuc3BhcmVudCIvPgo8L3JhZGlhbEdyYWRpZW50Pgo8bGluZWFyR3JhZGllbnQgaWQ9InBhaW50MV9saW5lYXIiIHgxPSI5NjAiIHkxPSIxMDgwIiB4Mj0iOTYwIiB5Mj0iMCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjMjJEM0VFIi8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0Y0NzJCNiIvPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPg==`;
+// A cinematic, futuristic hero image representing "Quantum Wealth Guard"
+const HERO_ASSET = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop";
 
 interface Transaction {
   id: string;
@@ -68,7 +65,7 @@ interface SubscriptionAnalysis {
 
 type AppScreen = 'dashboard' | 'dataset';
 
-// --- Initial State ---
+// --- Saved Intelligence Data (Constant) ---
 
 const MOCK_TRANSACTIONS: Transaction[] = [
   { id: 'n1', merchant: 'Netflix', amount: 15.99, date: '2023-11-15', category: 'Entertainment' },
@@ -87,7 +84,7 @@ const MOCK_TRANSACTIONS: Transaction[] = [
   { id: 'c1', merchant: 'CloudStorage', amount: 9.99, date: '2023-11-05', category: 'Software' },
 ];
 
-const INITIAL_ANALYSIS: SubscriptionAnalysis[] = [
+const SAVED_ANALYSIS: SubscriptionAnalysis[] = [
   {
     name: "Netflix",
     billingCycle: "monthly",
@@ -224,7 +221,7 @@ const Header = ({ currentScreen, setScreen, logoImage }: { currentScreen: AppScr
           onClick={() => setScreen('dashboard')}
         >
           <div className="relative w-10 h-10 md:w-16 md:h-16 overflow-hidden rounded-xl md:rounded-2xl bg-black flex items-center justify-center border border-white/20 shadow-xl transition-transform group-hover:scale-105 group-active:scale-95">
-             <img src={logoImage} alt="SmartPause AI Logo" className="w-full h-full object-contain p-1" />
+             <img src={logoImage} alt="SmartPause AI Logo" className="w-full h-full object-cover" />
              <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/10 to-transparent pointer-events-none"></div>
           </div>
           <div className="flex flex-col">
@@ -263,56 +260,18 @@ const Header = ({ currentScreen, setScreen, logoImage }: { currentScreen: AppScr
 const App = () => {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('dashboard');
   const [loading, setLoading] = useState(false);
-  const [analysis, setAnalysis] = useState<SubscriptionAnalysis[]>(INITIAL_ANALYSIS);
+  const [analysis, setAnalysis] = useState<SubscriptionAnalysis[]>(SAVED_ANALYSIS);
   
-  // Synchronous initialization for frame-zero rendering
-  const heroImage = "/images/download.png";
-  const logoImage = "/images/frontpic.png";
+  // Use constant saved assets
+  const heroImage = HERO_ASSET;
+  const logoImage = LOGO_ASSET;
 
+  // Local simulated analysis for UX feedback
   const runAnalysis = async () => {
     setLoading(true);
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: MODEL_NAME,
-        contents: `Analyze these recurring payments: ${JSON.stringify(MOCK_TRANSACTIONS)}. Theme: "Quantum Financial Vibe". Focus on behavioral archetypes. Return updated analysis keeping the same structure.`,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                name: { type: Type.STRING },
-                billingCycle: { type: Type.STRING },
-                cost: { type: Type.NUMBER },
-                intentScore: { type: Type.INTEGER },
-                behavioralCategory: { type: Type.STRING },
-                regretProbability: { type: Type.STRING },
-                recommendedAction: { type: Type.STRING },
-                recommendedTiming: { type: Type.STRING },
-                explanationSignals: { type: Type.ARRAY, items: { type: Type.STRING } },
-                humanExplanation: { type: Type.STRING },
-                counterfactualSavings: {
-                  type: Type.OBJECT,
-                  properties: {
-                    followAnnual: { type: Type.NUMBER },
-                    ignoreAnnual: { type: Type.NUMBER },
-                    wastedSpendEstimate: { type: Type.NUMBER }
-                  },
-                  required: ["followAnnual", "ignoreAnnual", "wastedSpendEstimate"]
-                },
-                confidence: { type: Type.INTEGER },
-                assumption: { type: Type.STRING }
-              },
-              required: ["name", "billingCycle", "cost", "intentScore", "behavioralCategory", "regretProbability", "recommendedAction", "recommendedTiming", "explanationSignals", "humanExplanation", "counterfactualSavings", "confidence", "assumption"]
-            }
-          }
-        }
-      });
-      const data = JSON.parse(response.text || '[]');
-      if (data.length > 0) setAnalysis(data);
-    } catch (err: any) { console.error(err); } finally { setLoading(false); }
+    await new Promise(resolve => setTimeout(resolve, 600));
+    setLoading(false);
+    setAnalysis([...SAVED_ANALYSIS]); 
   };
 
   const totalPotentialSavings = useMemo(() => {
@@ -365,12 +324,12 @@ const App = () => {
           </div>
         ) : (
           <div className="animate-in">
-            {/* Stunning Hero - Always visible */}
-            <div className="mb-10 md:mb-24 relative h-[350px] sm:h-[450px] md:h-[650px] rounded-[2.5rem] md:rounded-[6rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] md:shadow-[0_40px_100px_rgba(0,0,0,0.1)] group">
+            {/* Hero Section */}
+            <div className="mb-10 md:mb-24 relative h-[350px] sm:h-[450px] md:h-[650px] rounded-[2.5rem] md:rounded-[6rem] overflow-hidden shadow-2xl group">
               <img src={heroImage} className="w-full h-full object-cover transition-transform duration-[3000ms] group-hover:scale-110" alt="Cosmic Finance" />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-900/30 to-transparent"></div>
               <div className="absolute bottom-8 md:bottom-28 left-6 md:left-24 right-6 md:right-auto max-w-4xl text-white">
-                <div className="inline-flex items-center gap-2 md:gap-3 bg-white/10 backdrop-blur-3xl px-4 md:px-6 py-2 rounded-full border border-white/20 text-[9px] md:text-[11px] font-black uppercase tracking-[0.3em] md:tracking-[0.4em] mb-6 md:mb-10 shadow-2xl animate-bounce-subtle">
+                <div className="inline-flex items-center gap-2 md:gap-3 bg-white/10 backdrop-blur-3xl px-4 md:px-6 py-2 rounded-full border border-white/20 text-[9px] md:text-[11px] font-black uppercase tracking-[0.4em] mb-6 md:mb-10 shadow-2xl animate-bounce-subtle">
                   <span className="w-3.5 h-3.5 md:w-4 md:h-4 text-cyan-400"><Sparkles className="w-full h-full fill-cyan-400/20" /></span> Financial Era Guard Active
                 </div>
                 <h2 className="text-4xl sm:text-6xl md:text-9xl font-black mb-4 md:mb-10 leading-[1.05] md:leading-[0.95] tracking-tighter">Your wealth, <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500">transcended</span>.</h2>
@@ -378,14 +337,14 @@ const App = () => {
               </div>
             </div>
 
-            {/* Bento Stats Grid */}
+            {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-10 mb-12 md:mb-32">
               <GlassCard className="md:col-span-2 p-8 md:p-14 relative overflow-hidden flex flex-col justify-between group">
                 <div className="absolute top-0 right-0 p-6 md:p-10 opacity-[0.05] md:opacity-10 group-hover:rotate-12 transition-transform duration-1000">
                   <Wallet className="w-24 h-24 md:w-40 md:h-40 text-cyan-500" />
                 </div>
                 <div>
-                  <h3 className="text-[10px] md:text-[11px] font-black text-cyan-600 uppercase tracking-[0.3em] md:tracking-[0.4em] mb-6 md:mb-10 flex items-center gap-2.5">
+                  <h3 className="text-[10px] md:text-[11px] font-black text-cyan-600 uppercase tracking-[0.3em] mb-6 md:mb-10 flex items-center gap-2.5">
                     <div className="w-1.5 h-1.5 rounded-full bg-cyan-500"></div> Recovery Potential
                   </h3>
                   <div className="flex items-baseline gap-3 md:gap-4 mb-1">
@@ -407,7 +366,7 @@ const App = () => {
 
               <div className="bg-slate-950 p-8 md:p-14 rounded-[2rem] md:rounded-[3.5rem] shadow-2xl text-white flex flex-col justify-between border border-white/10 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-6 md:p-10 opacity-20 transition-all duration-1000 group-hover:scale-125 group-hover:rotate-[20deg]">
-                  <img src={logoImage} alt="logo" className="w-16 h-16 md:w-24 md:h-24 object-contain" />
+                  <img src={logoImage} alt="logo" className="w-16 h-16 md:w-24 md:h-24 object-cover rounded-2xl" />
                 </div>
                 <h3 className="text-[10px] md:text-[11px] font-black text-white/40 uppercase tracking-[0.4em] mb-6 md:mb-10">Precision Index</h3>
                 <div className="text-4xl md:text-7xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-pink-500">96.8%</div>
@@ -415,7 +374,7 @@ const App = () => {
               </div>
             </div>
 
-            {/* Intelligence Stream */}
+            {/* Quantum Stream */}
             <div className="space-y-10 md:space-y-28">
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-4 md:px-6">
                 <div>
@@ -424,7 +383,7 @@ const App = () => {
                 </div>
                 <button 
                   onClick={runAnalysis}
-                  className="inline-flex items-center justify-center gap-3 md:gap-4 bg-slate-950 text-white px-8 md:px-12 py-4 md:py-5 rounded-2xl md:rounded-3xl text-[10px] md:text-xs font-black uppercase tracking-[0.3em] md:tracking-[0.4em] hover:scale-[1.03] active:scale-95 transition-all shadow-xl shadow-cyan-500/10 border border-white/10 group w-full md:w-auto"
+                  className="inline-flex items-center justify-center gap-3 md:gap-4 bg-slate-950 text-white px-8 md:px-12 py-4 md:py-5 rounded-2xl md:rounded-3xl text-[10px] md:text-xs font-black uppercase tracking-[0.4em] hover:scale-[1.03] active:scale-95 transition-all shadow-xl shadow-cyan-500/10 border border-white/10 group w-full md:w-auto"
                 >
                   <RefreshCcw className={`w-4 h-4 md:w-5 md:h-5 text-cyan-400 ${loading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-700'}`} />
                   {loading ? 'Analyzing...' : 'Resync Vibes'}
@@ -443,7 +402,7 @@ const App = () => {
                           <div>
                             <div className="flex flex-wrap items-center gap-2 md:gap-4 mb-2 md:mb-4">
                               <h3 className="text-2xl md:text-7xl font-black text-slate-900 tracking-tighter">{sub.name}</h3>
-                              <span className={`text-[8px] md:text-[12px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] px-3 md:px-6 py-1.5 md:py-2.5 rounded-full border ${
+                              <span className={`text-[8px] md:text-[12px] font-black uppercase tracking-[0.3em] px-3 md:px-6 py-1.5 md:py-2.5 rounded-full border ${
                                 sub.regretProbability === 'High' ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-cyan-50 text-cyan-700 border-cyan-200'
                               }`}>
                                 {sub.regretProbability} Regret Risk
@@ -456,7 +415,7 @@ const App = () => {
                         </div>
                         
                         <div className="flex items-center justify-between lg:flex-col lg:items-center gap-4 bg-slate-950 p-6 md:p-14 rounded-[2rem] md:rounded-[5rem] border border-white/10 min-w-full md:min-w-[320px] shadow-xl group-hover:scale-[1.01] transition-all">
-                          <p className="text-[9px] md:text-[12px] font-black uppercase text-white/30 tracking-[0.4em] md:tracking-[0.5em] hidden lg:block mb-6">Autonomous Action</p>
+                          <p className="text-[9px] md:text-[12px] font-black uppercase text-white/30 tracking-[0.5em] hidden lg:block mb-6">Autonomous Action</p>
                           <div className="flex items-center gap-4 md:gap-6">
                              <div className="scale-110 md:scale-150"><ActionIcon action={sub.recommendedAction} /></div>
                              <span className="text-xl md:text-5xl font-black text-white tracking-tighter">{sub.recommendedAction}</span>
@@ -495,7 +454,7 @@ const App = () => {
                               <span className="font-black text-cyan-600">${sub.counterfactualSavings.followAnnual.toFixed(0)}</span>
                             </div>
                             <div className="pt-6 md:pt-10 border-t border-cyan-200/50 flex justify-between items-center">
-                              <span className="text-[9px] md:text-xs font-black text-rose-500 uppercase tracking-[0.4em] md:tracking-[0.5em]">Leakage</span>
+                              <span className="text-[9px] md:text-xs font-black text-rose-500 uppercase tracking-[0.5em]">Leakage</span>
                               <span className="text-2xl md:text-7xl font-black text-rose-600 tracking-tighter">-${sub.counterfactualSavings.wastedSpendEstimate.toFixed(0)}</span>
                             </div>
                           </div>
@@ -507,9 +466,9 @@ const App = () => {
                     <div className="bg-slate-950 px-6 md:px-20 py-6 md:py-12 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8 border-t border-white/5">
                        <div className="flex items-center gap-4 md:gap-6">
                          <div className="h-2.5 w-2.5 md:h-3 md:w-3 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_20px_rgba(34,211,238,1)]"></div>
-                         <span className="text-[9px] md:text-[15px] font-black text-white uppercase tracking-[0.4em] md:tracking-[0.5em]">{sub.behavioralCategory} Archetype</span>
+                         <span className="text-[9px] md:text-[15px] font-black text-white uppercase tracking-[0.5em]">{sub.behavioralCategory} Archetype</span>
                        </div>
-                       <button className="text-[10px] md:text-[15px] font-black text-cyan-400 uppercase tracking-[0.3em] md:tracking-[0.4em] hover:text-white transition-all flex items-center gap-3 md:gap-4 group">
+                       <button className="text-[10px] md:text-[15px] font-black text-cyan-400 uppercase tracking-[0.4em] hover:text-white transition-all flex items-center gap-3 md:gap-4 group">
                          Execute Quantum Era Optimization <ArrowRight className="w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-3 transition-transform" />
                        </button>
                     </div>
@@ -520,16 +479,16 @@ const App = () => {
           </div>
         )}
 
-        {/* Stunning Branding Footer */}
+        {/* Branding Footer Section */}
         <section className="mt-24 md:mt-72 text-center pb-24 md:pb-60">
           <div className="relative inline-block mb-16 md:mb-24">
              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 blur-[40px] md:blur-[60px] opacity-10 md:opacity-20 animate-pulse"></div>
              <div className="relative inline-flex items-center gap-4 md:gap-6 bg-white px-8 md:px-16 py-5 md:py-8 rounded-[2rem] md:rounded-[3rem] shadow-2xl border border-slate-100">
-                <div className="w-12 h-12 md:w-20 md:h-20 bg-black rounded-xl md:rounded-[2rem] flex items-center justify-center p-2.5 md:p-3 shadow-xl hover:rotate-[360deg] transition-transform duration-1000">
-                  <img src={logoImage} alt="logo" className="w-full h-full object-contain" />
+                <div className="w-12 h-12 md:w-20 md:h-20 bg-black rounded-xl md:rounded-[2rem] overflow-hidden shadow-xl hover:rotate-[360deg] transition-transform duration-1000">
+                  <img src={logoImage} alt="logo" className="w-full h-full object-cover" />
                 </div>
                 <div className="text-left">
-                  <p className="text-[10px] md:text-lg font-black text-slate-800 uppercase tracking-[0.3em] md:tracking-[0.4em]">SmartPause AI</p>
+                  <p className="text-[10px] md:text-lg font-black text-slate-800 uppercase tracking-[0.4em]">SmartPause AI</p>
                   <p className="text-[8px] md:text-xs font-medium text-slate-400 uppercase tracking-[0.2em] mt-0.5 md:mt-1 italic">Exclusive prosperity engine</p>
                 </div>
              </div>
@@ -542,7 +501,7 @@ const App = () => {
           
           <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-10 px-4">
             {['Prosperity', 'Inference', 'Privacy', 'Autonomy'].map((p, i) => (
-              <GlassCard key={i} className="p-6 md:p-12 text-[9px] md:text-sm font-black uppercase tracking-[0.4em] md:tracking-[0.5em] text-slate-400 hover:text-cyan-500 hover:border-cyan-200 transition-all cursor-default text-center">
+              <GlassCard key={i} className="p-6 md:p-12 text-[9px] md:text-sm font-black uppercase tracking-[0.5em] text-slate-400 hover:text-cyan-500 hover:border-cyan-200 transition-all cursor-default text-center">
                 {p}
               </GlassCard>
             ))}
@@ -553,12 +512,12 @@ const App = () => {
       <footer className="hidden md:block py-32 md:py-48 border-t border-slate-100 bg-white relative">
         <div className="max-w-7xl mx-auto px-8 text-center">
           <div className="flex flex-col items-center gap-8 md:gap-10 mb-16 md:mb-20">
-            <div className="w-20 h-20 md:w-24 md:h-24 bg-black rounded-[2rem] md:rounded-[2.5rem] flex items-center justify-center p-4 shadow-2xl hover:scale-110 transition-transform">
-               <img src={logoImage} alt="SmartPause AI" className="w-full h-full object-contain" />
+            <div className="w-20 h-20 md:w-24 md:h-24 bg-black rounded-[2rem] md:rounded-[2.5rem] overflow-hidden flex items-center justify-center p-0 shadow-2xl hover:scale-110 transition-transform">
+               <img src={logoImage} alt="SmartPause AI" className="w-full h-full object-cover" />
             </div>
             <span className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter italic">SmartPause</span>
           </div>
-          <div className="flex flex-wrap justify-center gap-10 md:gap-24 text-[10px] md:text-[12px] font-black text-slate-300 uppercase tracking-[0.4em] md:tracking-[0.6em]">
+          <div className="flex flex-wrap justify-center gap-10 md:gap-24 text-[10px] md:text-[12px] font-black text-slate-300 uppercase tracking-[0.6em]">
             <a href="#" className="hover:text-cyan-500 transition-colors">Vibe protocol</a>
             <a href="#" className="hover:text-purple-500 transition-colors">Charter</a>
             <a href="#" className="hover:text-pink-500 transition-colors">Quant API</a>
