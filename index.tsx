@@ -63,7 +63,7 @@ interface SubscriptionAnalysis {
 
 type AppScreen = 'dashboard' | 'dataset';
 
-// --- Mock Data ---
+// --- Mock Data & Initial State ---
 
 const MOCK_TRANSACTIONS: Transaction[] = [
   { id: 'n1', merchant: 'Netflix', amount: 15.99, date: '2023-11-15', category: 'Entertainment' },
@@ -80,6 +80,66 @@ const MOCK_TRANSACTIONS: Transaction[] = [
   { id: 'd2', merchant: 'Disney+', amount: 10.99, date: '2023-12-10', category: 'Entertainment' },
   { id: 'g1', merchant: 'FitFocus Gym', amount: 45.00, date: '2023-11-20', category: 'Health' },
   { id: 'c1', merchant: 'CloudStorage', amount: 9.99, date: '2023-11-05', category: 'Software' },
+];
+
+const INITIAL_ANALYSIS: SubscriptionAnalysis[] = [
+  {
+    name: "Netflix",
+    billingCycle: "monthly",
+    cost: 15.99,
+    intentScore: 42,
+    behavioralCategory: "Passive Consumer",
+    regretProbability: "High",
+    recommendedAction: "Pause Era",
+    recommendedTiming: "Immediate",
+    explanationSignals: ["Low Engagement", "Price Drift", "Category Overlap"],
+    humanExplanation: "Your consumption metrics show a 60% decay in title completion over the last 3 months. This is a classic 'ghost subscription' pattern.",
+    counterfactualSavings: {
+      followAnnual: 110.00,
+      ignoreAnnual: 191.88,
+      wastedSpendEstimate: 81.88
+    },
+    confidence: 94,
+    assumption: "Viewing habits remain at current plateau."
+  },
+  {
+    name: "Adobe Creative",
+    billingCycle: "monthly",
+    cost: 52.99,
+    intentScore: 89,
+    behavioralCategory: "Professional Power",
+    regretProbability: "Low",
+    recommendedAction: "Upgrade Annual",
+    recommendedTiming: "Next Cycle",
+    explanationSignals: ["High Utility", "Tool Depth", "Zero Regret"],
+    humanExplanation: "Engagement remains at peak professional levels. Transitioning to an annual vault lock will optimize your capital efficiency by 22%.",
+    counterfactualSavings: {
+      followAnnual: 480.00,
+      ignoreAnnual: 635.88,
+      wastedSpendEstimate: 155.88
+    },
+    confidence: 98,
+    assumption: "Freelance throughput continues to scale."
+  },
+  {
+    name: "Disney+",
+    billingCycle: "monthly",
+    cost: 10.99,
+    intentScore: 15,
+    behavioralCategory: "Dormant Node",
+    regretProbability: "High",
+    recommendedAction: "Cancel Vault",
+    recommendedTiming: "Immediate",
+    explanationSignals: ["Zero Usage", "Redundant Content", "Auto-Renewal Loop"],
+    humanExplanation: "Our sensors haven't detected a single login event in 68 days. You are effectively donating wealth to a mega-corp.",
+    counterfactualSavings: {
+      followAnnual: 0.00,
+      ignoreAnnual: 131.88,
+      wastedSpendEstimate: 131.88
+    },
+    confidence: 99,
+    assumption: "No kids have requested 'Bluey' in the last 24 hours."
+  }
 ];
 
 // --- Custom Hook for Cursor Tracking ---
@@ -198,12 +258,11 @@ const Header = ({ currentScreen, setScreen, logoImage }: { currentScreen: AppScr
 const App = () => {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('dashboard');
   const [loading, setLoading] = useState(false);
-  const [analysis, setAnalysis] = useState<SubscriptionAnalysis[]>([]);
+  const [analysis, setAnalysis] = useState<SubscriptionAnalysis[]>(INITIAL_ANALYSIS);
   const [heroImage, setHeroImage] = useState<string | null>(null);
   const [logoImage, setLogoImage] = useState<string | null>(null);
 
   const fetchLogo = async () => {
-    // Attempt to load from cache
     const cached = localStorage.getItem('smartpause_logo_cache');
     if (cached) {
       setLogoImage(cached);
@@ -227,7 +286,6 @@ const App = () => {
   };
 
   const fetchHeroImage = async () => {
-    // Attempt to load from cache
     const cached = localStorage.getItem('smartpause_hero_cache');
     if (cached) {
       setHeroImage(cached);
@@ -251,12 +309,12 @@ const App = () => {
   };
 
   const runAnalysis = async () => {
-    setLoading(true);
+    setLoading(true); // Still show loading on the button, but not the whole screen
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: MODEL_NAME,
-        contents: `Analyze these recurring payments: ${JSON.stringify(MOCK_TRANSACTIONS)}. Theme: "Quantum Financial Vibe". Focus on behavioral archetypes.`,
+        contents: `Analyze these recurring payments: ${JSON.stringify(MOCK_TRANSACTIONS)}. Theme: "Quantum Financial Vibe". Focus on behavioral archetypes. Return updated analysis keeping the same structure.`,
         config: {
           responseMimeType: "application/json",
           responseSchema: {
@@ -291,12 +349,15 @@ const App = () => {
           }
         }
       });
-      setAnalysis(JSON.parse(response.text || '[]'));
+      const data = JSON.parse(response.text || '[]');
+      if (data.length > 0) setAnalysis(data);
     } catch (err: any) { console.error(err); } finally { setLoading(false); }
   };
 
   useEffect(() => {
-    runAnalysis();
+    // We already have initial analysis set in state.
+    // Fetch background updates on mount if needed, but the user wants it instant.
+    // fetchLogo and fetchHeroImage are handled in background.
     fetchHeroImage();
     fetchLogo();
   }, []);
@@ -421,18 +482,12 @@ const App = () => {
                   className="inline-flex items-center justify-center gap-3 md:gap-4 bg-slate-950 text-white px-8 md:px-12 py-4 md:py-5 rounded-2xl md:rounded-3xl text-[10px] md:text-xs font-black uppercase tracking-[0.3em] md:tracking-[0.4em] hover:scale-[1.03] active:scale-95 transition-all shadow-xl shadow-cyan-500/10 border border-white/10 group w-full md:w-auto"
                 >
                   <RefreshCcw className={`w-4 h-4 md:w-5 md:h-5 text-cyan-400 ${loading ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-700'}`} />
-                  Resync Vibes
+                  {loading ? 'Analyzing...' : 'Resync Vibes'}
                 </button>
               </div>
 
-              {loading ? (
-                <div className="space-y-6 md:space-y-10">
-                  {[1, 2].map(i => (
-                    <div key={i} className="bg-slate-100 h-64 md:h-[400px] rounded-[2rem] md:rounded-[4rem] animate-pulse border border-slate-200"></div>
-                  ))}
-                </div>
-              ) : (
-                analysis.map((sub, idx) => (
+              <div className="space-y-10 md:space-y-32">
+                {analysis.map((sub, idx) => (
                   <GlassCard key={idx} className="overflow-hidden group">
                     <div className="p-6 md:p-20">
                       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 md:gap-20 mb-10 md:mb-24">
@@ -514,8 +569,8 @@ const App = () => {
                        </button>
                     </div>
                   </GlassCard>
-                ))
-              )}
+                ))}
+              </div>
             </div>
           </div>
         )}
