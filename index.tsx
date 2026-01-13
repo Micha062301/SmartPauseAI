@@ -26,10 +26,15 @@ import {
   Globe
 } from 'lucide-react';
 
-// --- Constants & Types ---
+// --- Constants & Assets ---
 
 const MODEL_NAME = 'gemini-3-flash-preview';
 const IMAGE_MODEL = 'gemini-2.5-flash-image';
+
+// Instant-load High Fidelity Placeholders
+const DEFAULT_LOGO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iNjQiIGZpbGw9ImJsYWNrIi8+CjxwYXRoIGQ9Ik0xNjAgMTYwSDE5MlYyNTZIMzIwVjE2MEgzNTJWMzUySDMyMFYyNTZIMTkyVjM1MkgxNjBWMTYwWiIgZmlsbD0idXJsKCNwYWludDBfbGluZWFyKSIvPgo8cmVjdCB4PSIyMTAiIHk9IjM4MCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjYwIiByeD0iNSIgZmlsbD0iIzIyRDMzRSIvPgo8cmVjdCB4PSIyOTIiIHk9IjM4MCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjYwIiByeD0iNSIgZmlsbD0iIzIyRDMzRSIvPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJwYWludDBfbGluZWFyIiB4MT0iMTYwIiB5MT0iMTYwIiB4Mj0iMzUyIiB5Mj0iMzUyIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CjxzdG9wIHN0b3AtY29sb3I9IiMyMkQzRUUiLz4KPHN0b3Atb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjRjQ3MkI2Ii8+CjwvbGluZWFyR3JhZGllbnQ+CjwvZGVmcz4KPC9zdmc+`;
+
+const DEFAULT_HERO_SVG = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiB2aWV3Qm94PSIwIDAgMTkyMCAxMDgwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiBmaWxsPSIjMEQwRDEyIi8+CjxjaXJjbGUgY3g9Ijk2MCIgY3k9Ijc0MCIgcj0iNjAwIiBmaWxsPSJ1cmwoI3BhaW50MF9yYWRpYWwpIiBmaWxsLW9wYWNpdHk9IjAuMSIvPgo8ZyBvcGFjaXR5PSIwLjMiPgo8cGF0aCBkPSJNMCAxMDgwTDE5MjAgMTA4MEwxOTIwIDBMMCAxMDgwWiIgZmlsbD0idXJsKCNwYWludDFfbGluZWFyKSIvPgo8L2c+CjxkZWZzPgo8cmFkaWFsR3JhZGllbnQgaWQ9InBhaW50MF9yYWRpYWwiIGN4PSIwIiBjeT0iMCIgcj0iMSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIGdyYWRpZW50VHJhbnNmb3JtPSJ0cmFuc2xhdGUoOTYwIDc0MCkgcm90YmFzZSgzMDYwKSI+CjxzdG9wIHN0b3AtY29sb3I9IiMyMkQzRUUiLz4KPHN0b3Atb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSJ0cmFuc3BhcmVudCIvPgo8L3JhZGlhbEdyYWRpZW50Pgo8bGluZWFyR3JhZGllbnQgaWQ9InBhaW50MV9saW5lYXIiIHgxPSI5NjAiIHkxPSIxMDgwIiB4Mj0iOTYwIiB5Mj0iMCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjMjJEM0VFIi8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0Y0NzJCNiIvPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPg==`;
 
 interface Transaction {
   id: string;
@@ -63,7 +68,7 @@ interface SubscriptionAnalysis {
 
 type AppScreen = 'dashboard' | 'dataset';
 
-// --- Mock Data & Initial State ---
+// --- Initial State ---
 
 const MOCK_TRANSACTIONS: Transaction[] = [
   { id: 'n1', merchant: 'Netflix', amount: 15.99, date: '2023-11-15', category: 'Entertainment' },
@@ -142,7 +147,7 @@ const INITIAL_ANALYSIS: SubscriptionAnalysis[] = [
   }
 ];
 
-// --- Custom Hook for Cursor Tracking ---
+// --- Utilities ---
 
 const useMousePosition = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -210,7 +215,7 @@ const ActionIcon = ({ action }: { action: string }) => {
   return <Zap className={`${iconClass} text-purple-500`} />;
 };
 
-const Header = ({ currentScreen, setScreen, logoImage }: { currentScreen: AppScreen, setScreen: (s: AppScreen) => void, logoImage: string | null }) => {
+const Header = ({ currentScreen, setScreen, logoImage }: { currentScreen: AppScreen, setScreen: (s: AppScreen) => void, logoImage: string }) => {
   return (
     <header className="sticky top-0 z-[100] backdrop-blur-2xl bg-white/70 border-b border-white/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-8 h-16 md:h-24 flex items-center justify-between">
@@ -219,7 +224,7 @@ const Header = ({ currentScreen, setScreen, logoImage }: { currentScreen: AppScr
           onClick={() => setScreen('dashboard')}
         >
           <div className="relative w-10 h-10 md:w-16 md:h-16 overflow-hidden rounded-xl md:rounded-2xl bg-black flex items-center justify-center border border-white/20 shadow-xl transition-transform group-hover:scale-105 group-active:scale-95">
-             <img src={logoImage || 'logo.png'} alt="SmartPause AI Logo" className="w-full h-full object-contain p-1" />
+             <img src={logoImage} alt="SmartPause AI Logo" className="w-full h-full object-contain p-1" />
              <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/10 to-transparent pointer-events-none"></div>
           </div>
           <div className="flex flex-col">
@@ -259,16 +264,12 @@ const App = () => {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('dashboard');
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<SubscriptionAnalysis[]>(INITIAL_ANALYSIS);
-  const [heroImage, setHeroImage] = useState<string | null>(null);
-  const [logoImage, setLogoImage] = useState<string | null>(null);
+  
+  // Synchronous initialization for frame-zero rendering
+  const [heroImage, setHeroImage] = useState<string>(() => localStorage.getItem('smartpause_hero_cache') || DEFAULT_HERO_SVG);
+  const [logoImage, setLogoImage] = useState<string>(() => localStorage.getItem('smartpause_logo_cache') || DEFAULT_LOGO_SVG);
 
   const fetchLogo = async () => {
-    const cached = localStorage.getItem('smartpause_logo_cache');
-    if (cached) {
-      setLogoImage(cached);
-      return;
-    }
-
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
@@ -282,16 +283,10 @@ const App = () => {
           localStorage.setItem('smartpause_logo_cache', base64);
         }
       }
-    } catch (e) { console.error("Logo generation failed", e); }
+    } catch (e) { console.error("Logo update failed", e); }
   };
 
   const fetchHeroImage = async () => {
-    const cached = localStorage.getItem('smartpause_hero_cache');
-    if (cached) {
-      setHeroImage(cached);
-      return;
-    }
-
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
@@ -305,11 +300,11 @@ const App = () => {
           localStorage.setItem('smartpause_hero_cache', base64);
         }
       }
-    } catch (e) { console.error("Hero generation failed", e); }
+    } catch (e) { console.error("Hero update failed", e); }
   };
 
   const runAnalysis = async () => {
-    setLoading(true); // Still show loading on the button, but not the whole screen
+    setLoading(true);
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
@@ -355,11 +350,9 @@ const App = () => {
   };
 
   useEffect(() => {
-    // We already have initial analysis set in state.
-    // Fetch background updates on mount if needed, but the user wants it instant.
-    // fetchLogo and fetchHeroImage are handled in background.
-    fetchHeroImage();
-    fetchLogo();
+    // Silent background updates if cache is stale or missing
+    if (logoImage === DEFAULT_LOGO_SVG) fetchLogo();
+    if (heroImage === DEFAULT_HERO_SVG) fetchHeroImage();
   }, []);
 
   const totalPotentialSavings = useMemo(() => {
@@ -412,17 +405,9 @@ const App = () => {
           </div>
         ) : (
           <div className="animate-in">
-            {/* Stunning Hero */}
+            {/* Stunning Hero - Always visible */}
             <div className="mb-10 md:mb-24 relative h-[350px] sm:h-[450px] md:h-[650px] rounded-[2.5rem] md:rounded-[6rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] md:shadow-[0_40px_100px_rgba(0,0,0,0.1)] group">
-              {heroImage ? (
-                <img src={heroImage} className="w-full h-full object-cover transition-transform duration-[3000ms] group-hover:scale-110" alt="Cosmic Finance" />
-              ) : (
-                <div className="w-full h-full bg-[#0D0D12] flex items-center justify-center">
-                   <div className="w-16 h-16 md:w-24 md:h-24 bg-white/10 rounded-2xl md:rounded-3xl animate-pulse backdrop-blur-3xl flex items-center justify-center">
-                     <img src={logoImage || 'logo.png'} className="w-10 h-10 md:w-16 md:h-16 opacity-50 object-contain" />
-                   </div>
-                </div>
-              )}
+              <img src={heroImage} className="w-full h-full object-cover transition-transform duration-[3000ms] group-hover:scale-110" alt="Cosmic Finance" />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-900/30 to-transparent"></div>
               <div className="absolute bottom-8 md:bottom-28 left-6 md:left-24 right-6 md:right-auto max-w-4xl text-white">
                 <div className="inline-flex items-center gap-2 md:gap-3 bg-white/10 backdrop-blur-3xl px-4 md:px-6 py-2 rounded-full border border-white/20 text-[9px] md:text-[11px] font-black uppercase tracking-[0.3em] md:tracking-[0.4em] mb-6 md:mb-10 shadow-2xl animate-bounce-subtle">
@@ -462,7 +447,7 @@ const App = () => {
 
               <div className="bg-slate-950 p-8 md:p-14 rounded-[2rem] md:rounded-[3.5rem] shadow-2xl text-white flex flex-col justify-between border border-white/10 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-6 md:p-10 opacity-20 transition-all duration-1000 group-hover:scale-125 group-hover:rotate-[20deg]">
-                  <img src={logoImage || 'logo.png'} alt="logo" className="w-16 h-16 md:w-24 md:h-24 object-contain" />
+                  <img src={logoImage} alt="logo" className="w-16 h-16 md:w-24 md:h-24 object-contain" />
                 </div>
                 <h3 className="text-[10px] md:text-[11px] font-black text-white/40 uppercase tracking-[0.4em] mb-6 md:mb-10">Precision Index</h3>
                 <div className="text-4xl md:text-7xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-pink-500">96.8%</div>
@@ -581,7 +566,7 @@ const App = () => {
              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 blur-[40px] md:blur-[60px] opacity-10 md:opacity-20 animate-pulse"></div>
              <div className="relative inline-flex items-center gap-4 md:gap-6 bg-white px-8 md:px-16 py-5 md:py-8 rounded-[2rem] md:rounded-[3rem] shadow-2xl border border-slate-100">
                 <div className="w-12 h-12 md:w-20 md:h-20 bg-black rounded-xl md:rounded-[2rem] flex items-center justify-center p-2.5 md:p-3 shadow-xl hover:rotate-[360deg] transition-transform duration-1000">
-                  <img src={logoImage || 'logo.png'} alt="logo" className="w-full h-full object-contain" />
+                  <img src={logoImage} alt="logo" className="w-full h-full object-contain" />
                 </div>
                 <div className="text-left">
                   <p className="text-[10px] md:text-lg font-black text-slate-800 uppercase tracking-[0.3em] md:tracking-[0.4em]">SmartPause AI</p>
@@ -609,7 +594,7 @@ const App = () => {
         <div className="max-w-7xl mx-auto px-8 text-center">
           <div className="flex flex-col items-center gap-8 md:gap-10 mb-16 md:mb-20">
             <div className="w-20 h-20 md:w-24 md:h-24 bg-black rounded-[2rem] md:rounded-[2.5rem] flex items-center justify-center p-4 shadow-2xl hover:scale-110 transition-transform">
-               <img src={logoImage || 'logo.png'} alt="SmartPause AI" className="w-full h-full object-contain" />
+               <img src={logoImage} alt="SmartPause AI" className="w-full h-full object-contain" />
             </div>
             <span className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter italic">SmartPause</span>
           </div>
