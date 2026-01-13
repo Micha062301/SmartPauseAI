@@ -117,7 +117,6 @@ const CustomCursor = () => {
   );
 };
 
-// Fix: Use React.FC to ensure standard props like 'key' are recognized by TypeScript when used in maps
 const GlassCard: React.FC<{ children?: React.ReactNode, className?: string }> = ({ children, className = "" }) => (
   <div className={`backdrop-blur-xl bg-white/60 border border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.05)] rounded-[2rem] md:rounded-[2.5rem] transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] hover:border-white/60 ${className}`}>
     {children}
@@ -204,6 +203,13 @@ const App = () => {
   const [logoImage, setLogoImage] = useState<string | null>(null);
 
   const fetchLogo = async () => {
+    // Attempt to load from cache
+    const cached = localStorage.getItem('smartpause_logo_cache');
+    if (cached) {
+      setLogoImage(cached);
+      return;
+    }
+
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
@@ -212,13 +218,22 @@ const App = () => {
       });
       for (const part of response.candidates[0].content.parts) {
         if (part.inlineData) {
-          setLogoImage(`data:image/png;base64,${part.inlineData.data}`);
+          const base64 = `data:image/png;base64,${part.inlineData.data}`;
+          setLogoImage(base64);
+          localStorage.setItem('smartpause_logo_cache', base64);
         }
       }
     } catch (e) { console.error("Logo generation failed", e); }
   };
 
   const fetchHeroImage = async () => {
+    // Attempt to load from cache
+    const cached = localStorage.getItem('smartpause_hero_cache');
+    if (cached) {
+      setHeroImage(cached);
+      return;
+    }
+
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
@@ -227,7 +242,9 @@ const App = () => {
       });
       for (const part of response.candidates[0].content.parts) {
         if (part.inlineData) {
-          setHeroImage(`data:image/png;base64,${part.inlineData.data}`);
+          const base64 = `data:image/png;base64,${part.inlineData.data}`;
+          setHeroImage(base64);
+          localStorage.setItem('smartpause_hero_cache', base64);
         }
       }
     } catch (e) { console.error("Hero generation failed", e); }
@@ -348,7 +365,7 @@ const App = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-900/30 to-transparent"></div>
               <div className="absolute bottom-8 md:bottom-28 left-6 md:left-24 right-6 md:right-auto max-w-4xl text-white">
                 <div className="inline-flex items-center gap-2 md:gap-3 bg-white/10 backdrop-blur-3xl px-4 md:px-6 py-2 rounded-full border border-white/20 text-[9px] md:text-[11px] font-black uppercase tracking-[0.3em] md:tracking-[0.4em] mb-6 md:mb-10 shadow-2xl animate-bounce-subtle">
-                  <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4 text-cyan-400 fill-cyan-400/20" /> Financial Era Guard Active
+                  <span className="w-3.5 h-3.5 md:w-4 md:h-4 text-cyan-400"><Sparkles className="w-full h-full fill-cyan-400/20" /></span> Financial Era Guard Active
                 </div>
                 <h2 className="text-4xl sm:text-6xl md:text-9xl font-black mb-4 md:mb-10 leading-[1.05] md:leading-[0.95] tracking-tighter">Your wealth, <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500">transcended</span>.</h2>
                 <p className="text-xs sm:text-lg md:text-3xl text-white/70 font-medium leading-relaxed max-w-2xl tracking-tight opacity-90">Protecting your era with autonomous behavioral intelligence and quantum-level prosperity monitoring.</p>
@@ -444,7 +461,7 @@ const App = () => {
                              <div className="scale-110 md:scale-150"><ActionIcon action={sub.recommendedAction} /></div>
                              <span className="text-xl md:text-5xl font-black text-white tracking-tighter">{sub.recommendedAction}</span>
                           </div>
-                          <p className="text-[10px] md:text-sm font-black text-cyan-400 uppercase tracking-[0.3em] mt-1 md:mt-4">{sub.recommendedTiming}</p>
+                          <p className="text-[10px] md:sm font-black text-cyan-400 uppercase tracking-[0.3em] mt-1 md:mt-4">{sub.recommendedTiming}</p>
                         </div>
                       </div>
 
