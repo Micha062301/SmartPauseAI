@@ -27,8 +27,8 @@ import {
 
 // --- Permanent Saved Assets ---
 
-// A professional, permanent logo asset for SmartPause
-const LOGO_ASSET = "https://images.unsplash.com/photo-1614850523296-e8c1d4704a96?q=80&w=200&h=200&auto=format&fit=crop";
+// A professional, permanent logo asset for SmartPause - High-fidelity abstract tech icon
+const LOGO_ASSET = "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?q=80&w=400&h=400&auto=format&fit=crop";
 
 // A cinematic, futuristic hero image representing "Quantum Wealth Guard"
 const HERO_ASSET = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop";
@@ -269,7 +269,7 @@ const App = () => {
   // Local simulated analysis for UX feedback
   const runAnalysis = async () => {
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 600));
+    await new Promise(resolve => setTimeout(resolve, 800));
     setLoading(false);
     setAnalysis([...SAVED_ANALYSIS]); 
   };
